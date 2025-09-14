@@ -1,9 +1,11 @@
+import { AuthenticationPage } from "./components/AuthenticationPage";
 import { ModeToggle } from "./components/mode-toggle";
 
 function App() {
   return (
-    <div className="">
+    <div >
       <ModeToggle />
+      <AuthenticationPage />
     </div>
   );
 }
