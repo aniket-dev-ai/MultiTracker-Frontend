@@ -1,7 +1,11 @@
-const App = () => {
+import { ModeToggle } from "./components/mode-toggle";
+
+function App() {
   return (
-    <div className="h-screen w-screen bg-cyan-900">App</div>
-  )
+    <div className="">
+      <ModeToggle />
+    </div>
+  );
 }
 
-export default App
+export default App;
