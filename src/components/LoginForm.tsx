@@ -12,14 +12,14 @@ import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
   return (
-    <Card>
+    <Card >
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl">Welcome Back</CardTitle>
         <CardDescription>
           Enter your email and password to access your dashboard
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid gap-4 ">
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
           <Input id="email" type="email" placeholder="m@example.com" />
