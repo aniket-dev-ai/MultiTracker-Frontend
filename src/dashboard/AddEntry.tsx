@@ -36,13 +36,14 @@ import { Textarea } from "@/components/ui/textarea";
 // Utility function from shadcn/ui
 import { cn } from "@/lib/utils";
 
-// Helper component for consistent section styling
+// Helper component for consistent section styling with added hover effect
 const FormSection: React.FC<{
-  title: string,
-  children: React.ReactNode,
-  description?: string,
-}> = ({ title, children, description }) => (
-  <Card>
+  title: string;
+  children: React.ReactNode;
+  description?: string;
+  className?: string; // Allow passing extra classes like col-span
+}> = ({ title, children, description, className }) => (
+  <Card className={cn("transition-all hover:shadow-lg", className)}>
     <CardHeader>
       <CardTitle>{title}</CardTitle>
       {description && <CardDescription>{description}</CardDescription>}
@@ -67,6 +68,9 @@ export default function ProgressEntryForm() {
       date: date ? format(date, "yyyy-MM-dd") : "N/A",
       waterIntake: waterIntake[0],
       sleepHours: sleepHours[0],
+      // Switches don't add value if not 'on', so we check for their presence
+      firstBath: data.firstBath === "on",
+      secondBath: data.secondBath === "on",
     };
 
     console.log("Form Submitted:", finalData);
@@ -74,7 +78,7 @@ export default function ProgressEntryForm() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-4 md:p-8 bg-background">
+    <div className="max-w-5xl mx-auto p-4 md:p-8 bg-background">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight">
           Daily Progress Entry
@@ -84,207 +88,201 @@ export default function ProgressEntryForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Date Section */}
-        <FormSection
-          title="Date"
-          description="Select the date for this progress entry"
-        >
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, "PPP") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                initialFocus
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* The main grid container for the form sections */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Date Section - Spans full width for prominence */}
+          <FormSection
+            title="Date"
+            description="Select the date for this progress entry"
+            className="md:col-span-2"
+          >
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </FormSection>
+
+          {/* Left Column Starts */}
+          <FormSection
+            title="Study Activities"
+            description="Describe your learning activities."
+          >
+            <Textarea
+              name="studyActivities"
+              placeholder="What did you study today?"
+            />
+          </FormSection>
+
+          {/* Right Column */}
+          <FormSection
+            title="Exercise & Physical Activity"
+            description="Describe your workouts or sports."
+          >
+            <Textarea
+              name="exercise"
+              placeholder="What physical activities did you do?"
+            />
+          </FormSection>
+
+          {/* Left Column */}
+          <FormSection
+            title="Water Intake (Liters)"
+            description="How much water did you drink?"
+          >
+            <div className="flex items-center gap-4 pt-2">
+              <Slider
+                name="waterIntake"
+                value={waterIntake}
+                onValueChange={setWaterIntake}
+                max={10}
+                step={0.5}
               />
-            </PopoverContent>
-          </Popover>
-        </FormSection>
-
-        {/* Text Area Sections */}
-        <FormSection
-          title="Study Activities"
-          description="Describe your study sessions, courses, or learning activities."
-        >
-          <Textarea
-            name="studyActivities"
-            placeholder="What did you study today?"
-          />
-        </FormSection>
-
-        <FormSection
-          title="Meditation & Mindfulness"
-          description="Note your meditation duration, technique, or mindfulness exercises."
-        >
-          <Textarea
-            name="meditation"
-            placeholder="Describe your meditation practice..."
-          />
-        </FormSection>
-
-        {/* Sliders */}
-        <FormSection
-          title="Water Intake"
-          description="How many liters of water did you drink today?"
-        >
-          <div className="flex items-center gap-4">
-            <Slider
-              name="waterIntake"
-              value={waterIntake}
-              onValueChange={setWaterIntake}
-              max={10}
-              step={0.5}
-            />
-            <span className="font-bold text-primary w-16 text-center">
-              {waterIntake[0]}L
-            </span>
-          </div>
-        </FormSection>
-
-        <FormSection
-          title="Exercise & Physical Activity"
-          description="Describe your workouts, sports, or physical activities."
-        >
-          <Textarea
-            name="exercise"
-            placeholder="What physical activities did you do?"
-          />
-        </FormSection>
-
-        {/* Input Fields */}
-        <FormSection
-          title="Test or Assessment Link"
-          description="Link to any test results or assessments you completed."
-        >
-          <Input
-            name="testLink"
-            placeholder="https://example.com/test-results"
-          />
-        </FormSection>
-
-        <FormSection
-          title="LinkedIn Post"
-          description="Note any professional posts or networking activities."
-        >
-          <Input
-            name="linkedinPost"
-            placeholder="Brief description of your LinkedIn activity..."
-          />
-        </FormSection>
-
-        {/* More Text Areas */}
-        <FormSection
-          title="Other Productive Activities"
-          description="Note any other productive work, side projects, or meaningful activities."
-        >
-          <Textarea
-            name="otherActivities"
-            placeholder="Any other productive tasks or activities..."
-          />
-        </FormSection>
-
-        <FormSection
-          title="English Practice"
-          description="Note reading, writing, speaking, or listening exercises."
-        >
-          <Textarea
-            name="englishPractice"
-            placeholder="Describe your English language practice..."
-          />
-        </FormSection>
-
-        {/* Sleep Slider */}
-        <FormSection
-          title="Total Sleep Hours"
-          description="How many hours did you sleep last night?"
-        >
-          <div className="flex items-center gap-4">
-            <Slider
-              name="sleepHours"
-              value={sleepHours}
-              onValueChange={setSleepHours}
-              max={24}
-              step={0.5}
-            />
-            <span className="font-bold text-primary w-16 text-center">
-              {sleepHours[0]}h
-            </span>
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground mt-2">
-            <span>0h</span>
-            <span>12h</span>
-            <span>24h</span>
-          </div>
-        </FormSection>
-
-        {/* Switches */}
-        <FormSection title="Daily Hygiene">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-md border">
-              <Label htmlFor="first-bath">
-                First Bath/Shower{" "}
-                <p className="text-sm text-muted-foreground font-normal">
-                  Morning or first hygiene routine
-                </p>
-              </Label>
-              <Switch id="first-bath" name="firstBath" />
+              <span className="font-bold text-primary w-16 text-center">
+                {waterIntake[0]}L
+              </span>
             </div>
-            <div className="flex items-center justify-between p-3 rounded-md border">
-              <Label htmlFor="second-bath">
-                Second Bath/Shower{" "}
-                <p className="text-sm text-muted-foreground font-normal">
-                  Evening or second hygiene routine
-                </p>
-              </Label>
-              <Switch id="second-bath" name="secondBath" />
+          </FormSection>
+
+          {/* Right Column */}
+          <FormSection
+            title="Total Sleep Hours"
+            description="How many hours did you sleep?"
+          >
+            <div className="flex items-center gap-4 pt-2">
+              <Slider
+                name="sleepHours"
+                value={sleepHours}
+                onValueChange={setSleepHours}
+                max={24}
+                step={0.5}
+              />
+              <span className="font-bold text-primary w-16 text-center">
+                {sleepHours[0]}h
+              </span>
             </div>
-          </div>
-        </FormSection>
+          </FormSection>
 
-        {/* Select */}
-        <FormSection
-          title="10K Steps Achievement"
-          description="Track if you achieved the daily 10,000 steps goal."
-        >
-          <Select name="stepsAchievement">
-            <SelectTrigger>
-              <SelectValue placeholder="Did you walk 10,000 steps?" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="completed">Yes, I completed it</SelectItem>
-              <SelectItem value="partial">
-                I walked a bit, but less than 10k
-              </SelectItem>
-              <SelectItem value="not_completed">No, I didn't</SelectItem>
-              <SelectItem value="not_tracked">I didn't track it</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormSection>
+          {/* Left Column */}
+          <FormSection
+            title="Meditation & Mindfulness"
+            description="Note your meditation duration."
+          >
+            <Textarea
+              name="meditation"
+              placeholder="Describe your meditation practice..."
+            />
+          </FormSection>
 
-        {/* Final Summary */}
-        <FormSection
-          title="Daily Summary"
-          description="Reflect on your overall day, achievements, and feelings."
-        >
-          <Textarea
-            name="dailySummary"
-            placeholder="How would you summarize your day?"
-            rows={5}
-          />
-        </FormSection>
+          {/* Right Column */}
+          <FormSection
+            title="English Practice"
+            description="Reading, writing, speaking, etc."
+          >
+            <Textarea
+              name="englishPractice"
+              placeholder="Describe your English language practice..."
+            />
+          </FormSection>
+
+          {/* This section spans both columns for a cleaner layout */}
+          <FormSection title="Daily Hygiene" className="md:col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between p-3 rounded-md border">
+                <Label htmlFor="first-bath">
+                  First Bath/Shower
+                  <p className="text-sm text-muted-foreground font-normal">
+                    Morning routine
+                  </p>
+                </Label>
+                <Switch id="first-bath" name="firstBath" />
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-md border">
+                <Label htmlFor="second-bath">
+                  Second Bath/Shower
+                  <p className="text-sm text-muted-foreground font-normal">
+                    Evening routine
+                  </p>
+                </Label>
+                <Switch id="second-bath" name="secondBath" />
+              </div>
+            </div>
+          </FormSection>
+
+          {/* Left Column */}
+          <FormSection
+            title="Test or Assessment Link"
+            description="Link to any test results."
+          >
+            <Input
+              name="testLink"
+              placeholder="https://example.com/test-results"
+            />
+          </FormSection>
+
+          {/* Right Column */}
+          <FormSection
+            title="LinkedIn Post"
+            description="Professional posts or networking."
+          >
+            <Input
+              name="linkedinPost"
+              placeholder="Description of your LinkedIn activity..."
+            />
+          </FormSection>
+
+          {/* Another full-width section */}
+          <FormSection
+            title="10K Steps Achievement"
+            description="Did you achieve the daily 10,000 steps goal?"
+            className="md:col-span-2"
+          >
+            <Select name="stepsAchievement">
+              <SelectTrigger>
+                <SelectValue placeholder="Select your step status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="completed">Yes, I completed it</SelectItem>
+                <SelectItem value="partial">
+                  Walked, but less than 10k
+                </SelectItem>
+                <SelectItem value="not_completed">No, I didn't</SelectItem>
+                <SelectItem value="not_tracked">I didn't track it</SelectItem>
+              </SelectContent>
+            </Select>
+          </FormSection>
+
+          {/* Final Summary - Spanning full width */}
+          <FormSection
+            title="Daily Summary"
+            description="Reflect on your overall day, achievements, and feelings."
+            className="md:col-span-2"
+          >
+            <Textarea
+              name="dailySummary"
+              placeholder="How would you summarize your day?"
+              rows={5}
+            />
+          </FormSection>
+        </div>
 
         {/* Submit Button */}
         <Button type="submit" size="lg" className="w-full">

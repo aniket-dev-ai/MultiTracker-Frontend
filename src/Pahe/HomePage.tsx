@@ -1,8 +1,4 @@
-import * as React from "react";
 import {
-  Moon,
-  Sun,
-  BarChart2,
   BrainCircuit,
   Bot,
   LineChart,
@@ -10,26 +6,10 @@ import {
   
   ArrowRight,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-// Theme Toggle Component
-function ModeToggle() {
-  const { setTheme, theme } = useTheme();
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-    >
-      <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-      <span className="sr-only">Toggle theme</span>
-    </Button>
-  );
-}
+ 
 
 // Main Landing Page Component
 export default function DataPlatformLandingPage() {
@@ -48,21 +28,7 @@ export default function DataPlatformLandingPage() {
     </div>
   );
 }
-
-// Navbar Component
-function Navbar() {
-  return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center justify-between">
-        <a href="#" className="flex items-center gap-2 font-bold">
-          <BarChart2 className="h-6 w-6" />
-          <span>Analytics</span>
-        </a>
-        <ModeToggle />
-      </div>
-    </header>
-  );
-}
+ 
 
 // Hero Section
 function HeroSection() {
@@ -151,7 +117,7 @@ function MethodologiesSection() {
             }}
           >
             {/* Overlay for readability and dark/light theme blending */}
-            <div className="absolute inset-0 bg-background/80 dark:bg-background/80 group-hover:bg-background/90 dark:group-hover:bg-background/90 transition-colors duration-300"></div>
+            <div className="absolute inset-0 bg-background/10 dark:bg-background/80 group-hover:bg-background/90 dark:group-hover:bg-background/90 transition-colors duration-300"></div>
 
             <CardContent className="pt-6 flex flex-col items-center text-center h-full relative z-10">
               {" "}
