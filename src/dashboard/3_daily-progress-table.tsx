@@ -73,7 +73,7 @@ const StatusIndicator = ({
   };
   const config = statusConfig[status] || statusConfig.not_tracked;
   return (
-    <Badge variant={config.variant} className={config.className}>
+    <Badge >
       {config.text}
     </Badge>
   );

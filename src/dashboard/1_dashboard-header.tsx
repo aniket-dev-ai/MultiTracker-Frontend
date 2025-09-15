@@ -1,7 +1,4 @@
-// src/components/dashboard/1_dashboard-header.tsx
-"use client";
-
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import axios from "axios";
 import { format } from "date-fns";
 import { Plus, ChevronsUpDown } from "lucide-react";
