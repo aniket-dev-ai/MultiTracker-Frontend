@@ -2,8 +2,14 @@
 "use client";
 
 import * as React from "react";
+import axios from "axios"; // Import axios
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Send } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Send,
+  Loader2,
+  Terminal,
+} from "lucide-react";
 
 // shadcn/ui Components
 import { Button } from "@/components/ui/button";
@@ -32,16 +38,17 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert
 
 // Utility function from shadcn/ui
 import { cn } from "@/lib/utils";
 
-// Helper component for consistent section styling with added hover effect
+// Helper component for consistent section styling
 const FormSection: React.FC<{
   title: string;
   children: React.ReactNode;
   description?: string;
-  className?: string; // Allow passing extra classes like col-span
+  className?: string;
 }> = ({ title, children, description, className }) => (
   <Card className={cn("transition-all hover:shadow-lg", className)}>
     <CardHeader>
@@ -53,28 +60,77 @@ const FormSection: React.FC<{
 );
 
 export default function ProgressEntryForm() {
+  // State for specific components
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [waterIntake, setWaterIntake] = React.useState<number[]>([2]);
   const [sleepHours, setSleepHours] = React.useState<number[]>([8]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // State for API call handling
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [success, setSuccess] = React.useState<string | null>(null);
+
+  // Form submission logic
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    // 1. Get auth token from localStorage
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Authentication error. Please log in again.");
+      setIsLoading(false);
+      return;
+    }
+
+    // 2. Collect form data
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
-    // Add state-managed values
-    const finalData = {
-      ...data,
-      date: date ? format(date, "yyyy-MM-dd") : "N/A",
-      waterIntake: waterIntake[0],
-      sleepHours: sleepHours[0],
-      // Switches don't add value if not 'on', so we check for their presence
-      firstBath: data.firstBath === "on",
-      secondBath: data.secondBath === "on",
+    // 3. Map frontend form data to backend controller keys
+    const payload = {
+      study: data.studyActivities,
+      meditation: data.meditation,
+      water_intake: waterIntake[0], // from state
+      exercise: data.exercise,
+      test_link: data.testLink,
+      linkedin_post: data.linkedinPost,
+      english_practice: data.englishPractice,
+      total_sleep_hours: sleepHours[0], // from state
+      first_bath: data.firstBath === "on", // Convert switch value to boolean
+      second_bath: data.secondBath === "on", // Convert switch value to boolean
+      walk_10k_steps: data.stepsAchievement,
+      summary: data.dailySummary,
+      // The controller handles the date on the backend, but you could send it too:
+      // date: date ? format(date, "yyyy-MM-dd") : new Date().toISOString().slice(0, 10),
     };
 
-    console.log("Form Submitted:", finalData);
-    alert("Progress submitted! Check the console for the data.");
+    // 4. Make the API call
+    try {
+      // IMPORTANT: Replace with your actual backend API endpoint
+      const API_URL = "http://localhost:3000/api/progress/daily"; // Assuming this is your endpoint
+
+      const response = await axios.post(API_URL, payload, {
+        headers: {
+          // Send the token for authentication
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setSuccess(response.data.message || "Progress saved successfully!");
+      console.log("Response:", response.data);
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.error ||
+        err.message ||
+        "An unexpected error occurred.";
+      setError(errorMessage);
+      console.error("Submission error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -89,9 +145,25 @@ export default function ProgressEntryForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* The main grid container for the form sections */}
+        {/* --- Feedback Alerts --- */}
+        {error && (
+          <Alert variant="destructive">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        {success && (
+          <Alert>
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        )}
+        {/* --- End Feedback Alerts --- */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Date Section - Spans full width for prominence */}
+          {/* Date Section */}
           <FormSection
             title="Date"
             description="Select the date for this progress entry"
@@ -121,7 +193,7 @@ export default function ProgressEntryForm() {
             </Popover>
           </FormSection>
 
-          {/* Left Column Starts */}
+          {/* Study Activities */}
           <FormSection
             title="Study Activities"
             description="Describe your learning activities."
@@ -132,7 +204,7 @@ export default function ProgressEntryForm() {
             />
           </FormSection>
 
-          {/* Right Column */}
+          {/* Exercise & Physical Activity */}
           <FormSection
             title="Exercise & Physical Activity"
             description="Describe your workouts or sports."
@@ -143,7 +215,7 @@ export default function ProgressEntryForm() {
             />
           </FormSection>
 
-          {/* Left Column */}
+          {/* Water Intake */}
           <FormSection
             title="Water Intake (Liters)"
             description="How much water did you drink?"
@@ -162,7 +234,7 @@ export default function ProgressEntryForm() {
             </div>
           </FormSection>
 
-          {/* Right Column */}
+          {/* Total Sleep Hours */}
           <FormSection
             title="Total Sleep Hours"
             description="How many hours did you sleep?"
@@ -181,7 +253,7 @@ export default function ProgressEntryForm() {
             </div>
           </FormSection>
 
-          {/* Left Column */}
+          {/* Meditation */}
           <FormSection
             title="Meditation & Mindfulness"
             description="Note your meditation duration."
@@ -192,7 +264,7 @@ export default function ProgressEntryForm() {
             />
           </FormSection>
 
-          {/* Right Column */}
+          {/* English Practice */}
           <FormSection
             title="English Practice"
             description="Reading, writing, speaking, etc."
@@ -203,7 +275,7 @@ export default function ProgressEntryForm() {
             />
           </FormSection>
 
-          {/* This section spans both columns for a cleaner layout */}
+          {/* Daily Hygiene */}
           <FormSection title="Daily Hygiene" className="md:col-span-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center justify-between p-3 rounded-md border">
@@ -227,7 +299,7 @@ export default function ProgressEntryForm() {
             </div>
           </FormSection>
 
-          {/* Left Column */}
+          {/* Test Link */}
           <FormSection
             title="Test or Assessment Link"
             description="Link to any test results."
@@ -238,7 +310,7 @@ export default function ProgressEntryForm() {
             />
           </FormSection>
 
-          {/* Right Column */}
+          {/* LinkedIn Post */}
           <FormSection
             title="LinkedIn Post"
             description="Professional posts or networking."
@@ -249,7 +321,7 @@ export default function ProgressEntryForm() {
             />
           </FormSection>
 
-          {/* Another full-width section */}
+          {/* 10K Steps */}
           <FormSection
             title="10K Steps Achievement"
             description="Did you achieve the daily 10,000 steps goal?"
@@ -270,7 +342,7 @@ export default function ProgressEntryForm() {
             </Select>
           </FormSection>
 
-          {/* Final Summary - Spanning full width */}
+          {/* Daily Summary */}
           <FormSection
             title="Daily Summary"
             description="Reflect on your overall day, achievements, and feelings."
@@ -285,12 +357,21 @@ export default function ProgressEntryForm() {
         </div>
 
         {/* Submit Button */}
-        <Button type="submit" size="lg" className="w-full">
-          <Send className="mr-2 h-4 w-4" /> Submit Progress
+        <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Submitting Progress...
+            </>
+          ) : (
+            <>
+              <Send className="mr-2 h-4 w-4" /> Submit Progress
+            </>
+          )}
         </Button>
       </form>
 
-      {/* Placeholder for future analytics */}
+      {/* Analytics Placeholder */}
       <div className="mt-8">
         <Card className="border-dashed">
           <CardHeader className="text-center">

@@ -98,8 +98,7 @@ export function SignUpForm() {
     // 3. Make the API call using axios
     try {
       // IMPORTANT: Replace with your actual backend API endpoint
-      const API_URL =
-        "https://multitracker-backend.onrender.com/api/auth/signup";
+      const API_URL = "http://localhost:3000/api/auth/signup";
 
       const response = await axios.post(API_URL, apiFormData, {
         headers: {
@@ -117,6 +116,7 @@ export function SignUpForm() {
         err.response?.data?.error ||
         err.message ||
         "An unexpected error occurred.";
+      console.error("Signup error:", errorMessage);
       setError(errorMessage);
     } finally {
       setIsLoading(false);

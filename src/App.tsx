@@ -9,9 +9,9 @@ function App() {
     <div>
       <ModeToggle />
       <AuthenticationPage />
-      <DataPlatformLandingPage />
+      {/* <DataPlatformLandingPage /> */}
       <DashboardPage />
-      <ProgressEntryForm />
+      {/* <ProgressEntryForm /> */}
     </div>
   )
 }
