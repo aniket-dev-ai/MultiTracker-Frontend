@@ -56,7 +56,7 @@ export function DashboardHeader({
       }
       try {
         const response = await axios.get(
-          "http://localhost:3000/api/auth/users",
+          "https://multitracker-backend.onrender.com/api/auth/users",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setUsers(response.data.users);

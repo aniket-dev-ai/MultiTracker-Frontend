@@ -110,7 +110,7 @@ export default function ProgressEntryForm() {
     // 4. Make the API call
     try {
       // IMPORTANT: Replace with your actual backend API endpoint
-      const API_URL = "http://localhost:3000/api/progress/daily"; // Assuming this is your endpoint
+      const API_URL = "https://multitracker-backend.onrender.com/api/progress/daily"; // Assuming this is your endpoint
 
       const response = await axios.post(API_URL, payload, {
         headers: {

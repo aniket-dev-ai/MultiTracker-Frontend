@@ -52,7 +52,7 @@ export function StatsGrid({ userId }: StatsGridProps) {
 
       try {
         const response = await axios.post(
-          "http://localhost:3000/api/progress/weekly",
+          "https://multitracker-backend.onrender.com/api/progress/weekly",
           { userId: userId }, // Pass the selected user's ID in the body
           {
             headers: { Authorization: `Bearer ${token}` },

@@ -108,7 +108,7 @@ export function DailyProgressTable({ userId }: DailyProgressTableProps) {
         return;
       }
       try {
-        const API_URL = "http://localhost:3000/api/progress/daily";
+        const API_URL = "https://multitracker-backend.onrender.com/api/progress/daily";
         // FIX: Changed to a GET request with a query parameter
         const response = await axios.get(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
