@@ -1,3 +1,6 @@
+// src/components/dashboard/2_stats-grid.tsx
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -10,24 +13,36 @@ import {
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-// Step 1: Data ke liye ek type define karein
 interface WeeklyStats {
   totalSteps: number;
-  totalSleep: number;
   totalWater: number;
+  totalSleep: number;
   progressPercentage: number;
 }
 
-export function StatsGrid() {
-  // Step 2: State variables banayein (data, loading, error)
+// Define the component's props
+interface StatsGridProps {
+  userId: number | null;
+}
+
+export function StatsGrid({ userId }: StatsGridProps) {
   const [stats, setStats] = useState<WeeklyStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // src/components/dashboard/2_stats-grid.tsx
-
+  // This useEffect now depends on `userId`.
+  // It will re-run whenever the userId changes.
   useEffect(() => {
+    // Don't fetch if no user is selected
+    if (!userId) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchStats = async () => {
+      setIsLoading(true); // Set loading state for each new fetch
+      setError(null);
+
       const token = localStorage.getItem("token");
       if (!token) {
         setError("Authentication failed. Please log in.");
@@ -36,53 +51,28 @@ export function StatsGrid() {
       }
 
       try {
-        // FIX 1: Route ko 'stats' mein badla gaya
-        console.log("Fetching weekly stats...");
-        const response = await axios.get(
-          "http://localhost:3000/api/progress/weekly", // 'weekly' se 'stats' kiya
+        const response = await axios.post(
+          "http://localhost:3000/api/progress/weekly",
+          { userId: userId }, // Pass the selected user's ID in the body
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-
-        // console.log("Weekly stats fetched:", response.data);
-
-        // FIX 2: Check karein ki 'weeklyStats' key maujood hai ya nahi
-        // Agar backend se { weeklyStats: {...} } aa raha hai, to yeh line sahi hai
-        if (response.data) {
-          setStats(response.data);
-          console.log("Weekly stats set in state:", response.data);
-        } else {
-          // Agar backend se seedhe { totalSteps: ... } aa raha hai, to yeh line use hogi
-          console.log(
-            "Data does not have 'weeklyStats' key, using response.data directly."
-          );
-          setStats(response.data);
-        }
+        console.log("Weekly stats fetched:", response.data);
+        setStats(response.data);
       } catch (err) {
-        setError("Failed to load weekly stats.");
-        console.log (err); // Error ko console mein log karein taaki aap dekh sakein
+        setError("Failed to load weekly stats for the selected user.");
+        console.log(err);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchStats();
-  }, []);
+  }, [userId]); // Dependency array ensures this runs when userId changes
 
-  useEffect(() => {
-    if (stats) {
-      console.log("Stats updated:", stats);
-    }
-  }, [stats]);
+  if (isLoading) return <StatsGridSkeleton />;
 
-  // ... (baki component ka code waise hi rahega)
-
-  // Step 4: Loading state handle karein
-  if (isLoading) {
-    return <StatsGridSkeleton />;
-  }
-
-  // Step 5: Error state handle karein
   if (error || !stats) {
     return (
       <div className="text-red-500 flex items-center gap-2 p-4 border border-red-200 bg-red-50 rounded-md">
@@ -92,29 +82,28 @@ export function StatsGrid() {
     );
   }
 
-  // Step 6: Fetched data se dynamically cards banayein
   const statCardsData = [
     {
       title: "Total Steps",
-      value: stats.totalSteps.toLocaleString(), // Example: 55,000
+      value: stats.totalSteps.toLocaleString(),
       period: "This week",
       icon: <Footprints className="h-4 w-4 text-muted-foreground" />,
     },
     {
       title: "Water Intake",
-      value: `${stats.totalWater}L`, // Example: 22L
+      value: `${stats.totalWater}L`,
       period: "This week",
       icon: <Droplets className="h-4 w-4 text-muted-foreground" />,
     },
     {
       title: "Sleep Hours",
-      value: `${stats.totalSleep}h`, // Example: 45h
+      value: `${stats.totalSleep}h`,
       period: "This week",
       icon: <BedDouble className="h-4 w-4 text-muted-foreground" />,
     },
     {
       title: "Weekly Goal",
-      value: `${stats.progressPercentage}%`, // Example: 85%
+      value: `${stats.progressPercentage}%`,
       period: "7-day completion",
       icon: <Target className="h-4 w-4 text-muted-foreground" />,
     },
@@ -129,7 +118,7 @@ export function StatsGrid() {
   );
 }
 
-// Is component mein koi change nahi chahiye
+// StatCard and Skeleton components remain unchanged
 interface StatCardProps {
   title: string;
   value: string;
@@ -152,7 +141,6 @@ function StatCard({ title, value, period, icon }: StatCardProps) {
   );
 }
 
-// Loading state ke liye ek skeleton component
 function StatsGridSkeleton() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

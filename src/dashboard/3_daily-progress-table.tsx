@@ -1,8 +1,6 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import axios from "axios";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns"; // Import 'isValid' for date checking
 import {
   FilePenLine,
   Trash2,
@@ -13,7 +11,7 @@ import {
   Link,
   BookOpen,
 } from "lucide-react";
-
+// ... other imports
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -34,7 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 
-// Step 1: Update the interface to include all fields from your JSON
+// ... ProgressEntry interface and helper components remain the same ...
 interface ProgressEntry {
   id: number;
   date: string;
@@ -51,8 +49,9 @@ interface ProgressEntry {
   walk_10k_steps: "completed" | "partial" | "not_completed" | "not_tracked";
   summary: string | null;
 }
-
-// StatusIndicator component (no changes needed)
+interface DailyProgressTableProps {
+  userId: number | null;
+}
 const StatusIndicator = ({
   status,
 }: {
@@ -79,26 +78,29 @@ const StatusIndicator = ({
     </Badge>
   );
 };
-
-// Helper component to show truncated text in the table
 const TruncatedTextCell = ({ text }: { text: string | null }) => {
   if (!text) return <span className="text-gray-400">N/A</span>;
   const truncated = text.length > 30 ? `${text.substring(0, 30)}...` : text;
   return <span title={text}>{truncated}</span>;
 };
 
-export function DailyProgressTable() {
+export function DailyProgressTable({ userId }: DailyProgressTableProps) {
   const [progress, setProgress] = useState<ProgressEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Step 2: State to manage which entry is selected for the details dialog
   const [selectedEntry, setSelectedEntry] = useState<ProgressEntry | null>(
     null
   );
 
   useEffect(() => {
+    if (!userId) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchProgress = async () => {
+      setIsLoading(true);
+      setError(null);
       const token = localStorage.getItem("token");
       if (!token) {
         setError("You are not logged in.");
@@ -107,10 +109,11 @@ export function DailyProgressTable() {
       }
       try {
         const API_URL = "http://localhost:3000/api/progress/daily";
+        // FIX: Changed to a GET request with a query parameter
         const response = await axios.get(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
+          params: { userId: userId }, // This adds '?userId=...' to the URL
         });
-        // console.log("Daily progress fetched:", response.data);
         setProgress(response.data.progress);
       } catch (err: any) {
         setError(err.response?.data?.error || "Failed to fetch progress data.");
@@ -118,14 +121,15 @@ export function DailyProgressTable() {
         setIsLoading(false);
       }
     };
+
     fetchProgress();
-  }, []);
+  }, [userId]);
 
   const renderTableBody = () => {
     if (isLoading)
       return (
         <TableRow>
-          <TableCell colSpan={9} className="text-center p-4">
+          <TableCell colSpan={8} className="text-center p-4">
             <Loader2 className="mr-2 h-5 w-5 animate-spin inline" />
             Loading...
           </TableCell>
@@ -134,7 +138,7 @@ export function DailyProgressTable() {
     if (error)
       return (
         <TableRow>
-          <TableCell colSpan={9} className="text-center text-red-500 p-4">
+          <TableCell colSpan={8} className="text-center text-red-500 p-4">
             <AlertCircle className="mr-2 h-5 w-5 inline" />
             Error: {error}
           </TableCell>
@@ -143,55 +147,60 @@ export function DailyProgressTable() {
     if (progress.length === 0)
       return (
         <TableRow>
-          <TableCell colSpan={9} className="text-center text-gray-500 p-4">
-            No progress entries found.
+          <TableCell colSpan={8} className="text-center text-gray-500 p-4">
+            No progress entries found for this user.
           </TableCell>
         </TableRow>
       );
 
-    return progress.map((entry) => (
-      <TableRow key={entry.id}>
-        <TableCell className="font-medium">
-          {format(new Date(entry.date), "dd MMM, yyyy")}
-        </TableCell>
-        <TableCell>
-          <TruncatedTextCell text={entry.study} />
-        </TableCell>
-        <TableCell>
-          <TruncatedTextCell text={entry.exercise} />
-        </TableCell>
-        <TableCell>{entry.water_intake ?? "N/A"}L</TableCell>
-        <TableCell>{entry.total_sleep_hours ?? "N/A"}h</TableCell>
-        <TableCell>
-          <StatusIndicator status={entry.walk_10k_steps} />
-        </TableCell>
-        <TableCell>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSelectedEntry(entry)}
-          >
-            <BookOpen className="h-4 w-4 mr-2" />
-            Details
-          </Button>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" title="Edit">
-              <FilePenLine className="h-4 w-4" />
-            </Button>
+    return progress.map((entry) => {
+      // FIX: Safely create and check the date before formatting
+      const entryDate = new Date(entry.date);
+      const displayDate = isValid(entryDate)
+        ? format(entryDate, "dd MMM, yyyy")
+        : "Invalid Date";
+
+      return (
+        <TableRow key={entry.id}>
+          <TableCell className="font-medium">{displayDate}</TableCell>
+          <TableCell>
+            <TruncatedTextCell text={entry.study} />
+          </TableCell>
+          <TableCell>
+            <TruncatedTextCell text={entry.exercise} />
+          </TableCell>
+          <TableCell>{entry.water_intake ?? "N/A"}L</TableCell>
+          <TableCell>{entry.total_sleep_hours ?? "N/A"}h</TableCell>
+          <TableCell>
+            <StatusIndicator status={entry.walk_10k_steps} />
+          </TableCell>
+          <TableCell>
             <Button
-              variant="ghost"
-              size="icon"
-              className="text-red-500 hover:text-red-600"
-              title="Delete"
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedEntry(entry)}
             >
-              <Trash2 className="h-4 w-4" />
+              <BookOpen className="h-4 w-4 mr-2" /> Details
             </Button>
-          </div>
-        </TableCell>
-      </TableRow>
-    ));
+          </TableCell>
+          <TableCell>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" title="Edit">
+                <FilePenLine className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-red-500 hover:text-red-600"
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableCell>
+        </TableRow>
+      );
+    });
   };
 
   return (
@@ -219,7 +228,7 @@ export function DailyProgressTable() {
         </CardContent>
       </Card>
 
-      {/* Step 3: Add the Dialog component for showing all details */}
+      {/* Dialog for details remains unchanged */}
       <Dialog
         open={!!selectedEntry}
         onOpenChange={() => setSelectedEntry(null)}
@@ -230,7 +239,9 @@ export function DailyProgressTable() {
               <DialogHeader>
                 <DialogTitle>
                   Progress Details:{" "}
-                  {format(new Date(selectedEntry.date), "dd MMMM, yyyy")}
+                  {isValid(new Date(selectedEntry.date))
+                    ? format(new Date(selectedEntry.date), "dd MMMM, yyyy")
+                    : "Invalid Date"}
                 </DialogTitle>
                 <DialogDescription>
                   A complete log of all activities for this day.
