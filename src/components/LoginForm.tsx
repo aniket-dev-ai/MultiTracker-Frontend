@@ -64,7 +64,7 @@ export function LoginForm() {
         err.response?.data?.error ||
         err.message ||
         "An unexpected error occurred.";
-      console.error("Login error:", errorMessage);
+      console.log("Login error:", errorMessage);
       setError(errorMessage);
     } finally {
       setIsLoading(false); // Stop loading, whether successful or not
